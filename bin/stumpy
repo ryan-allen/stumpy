@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/stumpy'
+Stumpy::CommandRunner.new(*ARGV).run!
