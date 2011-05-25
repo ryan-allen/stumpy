@@ -1,4 +1,11 @@
 #!/usr/bin/env ruby
 
 require_relative '../lib/stumpy'
-Stumpy::CommandRunner.new(*ARGV).run!
+
+if ARGV[0] == 'console'
+  require 'irb'
+  ARGV.clear
+  IRB.start
+else
+  Stumpy::CommandRunner.new(*ARGV)
+end

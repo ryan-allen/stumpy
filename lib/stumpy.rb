@@ -4,24 +4,46 @@ require 'singleton'
 
 module Stumpy
   class CommandRunner
-    # stumpy path-to-test-file taskname
-    # i.e. bin/stumpy recipies/test.rb make_datefile
     def initialize(*args)
-      path_to_recipie, task_name = *args
-      require(path_to_recipie)
-      RecipieRunner.new(Recipies.detect { |r| r[0][0].to_s == task_name })
+      path_to_recipie = *args
+      require(path_to_recipie) # requires a relative path i.e. ./blah.rb, not just blah.rb
+      RecipieRunner.new(Recipies.instance.recipies.first) # only supports one at a time, at the moment.
     end
   end
 
   class RecipieRunner
+    def initialize(recipie)
+      recipie.each do |step|
+        name = step[1]
+        setup = step.last.detect { |s| s[0] == :setup }[1]
+        verify = step.last.detect { |s| s[0] == :verify }[1]
+        puts name
+        if verify.call
+          puts '  ALREADY DONE, VERIFIED.'
+        else
+          puts '  NOT DONE, WORKING...'
+          setup.call
+          if verify.call
+            puts '  DONE, VERIFIED.'
+          else
+            puts '  DONE, VERIFICATION FAILED, EXITING.'
+            break
+          end
+        end
+      end
+    end
   end
 
   class Recipies
     include Singleton
-    attr_reader :recipies
+    attr :recipies
 
     def self.define(&recipie)
-      instance.recipies << Lispy.to_data(&recipie)
+      instance.recipies << Lispy.new.to_data(&recipie)
+    end
+
+    def self.detect(&test)
+      instance.recipies.detect(&test)
     end
 
     def initialize
